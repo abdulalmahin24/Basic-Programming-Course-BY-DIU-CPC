@@ -1,0 +1,583 @@
+/* ============================================================
+   DIU CPC Basic Programming Course — Attendance System JS
+   ============================================================ */
+
+'use strict';
+
+/* ---- State ---- */
+let records = loadRecords();
+
+/* ============================================================
+   CLOCK & DATE
+   ============================================================ */
+function updateClock() {
+  const now = new Date();
+  const timeEl = document.getElementById('liveClock');
+  const dateEl = document.getElementById('dateDisplay');
+
+  if (timeEl) {
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    timeEl.textContent = `${h}:${m}:${s}`;
+  }
+
+  if (dateEl) {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    dateEl.textContent = now.toLocaleDateString('en-BD', options);
+  }
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ============================================================
+   ON PAGE LOAD
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', () => {
+  // Set today's date
+  const today = new Date().toISOString().split('T')[0];
+  const lectureDateInput = document.getElementById('lectureDate');
+  if (lectureDateInput) {
+    lectureDateInput.value = today;
+    lectureDateInput.max = today;
+  }
+
+  // Auto-fill lecture number
+  const todayRecords = records.filter(r => r.date === today);
+  const lectureNoInput = document.getElementById('lectureNo');
+  if (lectureNoInput && todayRecords.length === 0) {
+    const uniqueDates = [...new Set(records.map(r => r.date))];
+    lectureNoInput.value = uniqueDates.includes(today) ? (records[0]?.lecture || 1) : uniqueDates.length + 1;
+  } else if (lectureNoInput && todayRecords.length > 0) {
+    lectureNoInput.value = todayRecords[0].lecture;
+  }
+
+  // Update session label
+  const sessionEl = document.getElementById('todayLecture');
+  if (sessionEl) {
+    const lec = document.getElementById('lectureNo')?.value || '?';
+    sessionEl.textContent = `Lecture #${lec}`;
+  }
+
+  updateStats();
+  renderTable();
+});
+
+/* ---- Storage Keys ---- */
+const STORAGE_KEY = 'diucpc_attendance_records';
+
+/* ============================================================
+   LOCAL STORAGE
+   ============================================================ */
+function loadRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecords() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+
+/* ============================================================
+   STATS
+   ============================================================ */
+function updateStats() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayCount = records.filter(r => r.date === today).length;
+
+  const el1 = document.getElementById('totalAttendees');
+  const el2 = document.getElementById('totalRecords');
+
+  if (el1) animateCount(el1, todayCount);
+  if (el2) animateCount(el2, records.length);
+}
+
+function animateCount(el, target) {
+  const start = parseInt(el.textContent) || 0;
+  const diff = target - start;
+  const duration = 500;
+  const startTime = performance.now();
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + diff * eased);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+
+  requestAnimationFrame(step);
+}
+
+
+
+/* ============================================================
+   FORM VALIDATION & SUBMIT
+   ============================================================ */
+const form = document.getElementById('attendanceForm');
+
+if (form) {
+  form.addEventListener('submit', handleSubmit);
+
+  form.querySelectorAll('.form-input').forEach(input => {
+    input.addEventListener('blur', () => validateField(input));
+    input.addEventListener('input', () => {
+      if (input.classList.contains('error')) validateField(input);
+    });
+  });
+}
+
+function validateField(input) {
+  const id = input.id;
+  const errorMap = {
+    studentName: 'nameError',
+    studentEmail: 'emailError',
+    studentRoll: 'rollError',
+    studentBatch: 'batchError',
+    lectureNo: 'lectureError',
+    lectureDate: 'dateError',
+  };
+
+  const errorEl = document.getElementById(errorMap[id]);
+  if (!errorEl) return true;
+
+  let msg = '';
+
+  if (!input.value.trim()) {
+    msg = 'This field is required.';
+  } else {
+    if (id === 'studentEmail') {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(input.value.trim())) {
+        msg = 'Please enter a valid email address.';
+      }
+    }
+    if (id === 'studentName' && input.value.trim().length < 2) {
+      msg = 'Name must be at least 2 characters.';
+    }
+    if (id === 'studentRoll' && input.value.trim().length < 1) {
+      msg = 'Enter a valid roll number.';
+    }
+    if (id === 'lectureNo' && (parseInt(input.value) < 1 || isNaN(parseInt(input.value)))) {
+      msg = 'Enter a valid lecture number (≥ 1).';
+    }
+  }
+
+  errorEl.textContent = msg;
+  input.classList.toggle('error', !!msg);
+  input.classList.toggle('success', !msg && !!input.value.trim());
+
+  return !msg;
+}
+
+function handleSubmit(e) {
+  e.preventDefault();
+
+  // Validate required fields
+  const fields = ['studentName', 'studentEmail', 'studentRoll', 'studentBatch', 'lectureNo', 'lectureDate'];
+  let valid = true;
+
+  fields.forEach(id => {
+    const input = document.getElementById(id);
+    if (input && !validateField(input)) valid = false;
+  });
+
+  // Validate checkbox
+  const confirmEl = document.getElementById('confirmPresent');
+  const confirmError = document.getElementById('confirmError');
+  if (confirmEl && !confirmEl.checked) {
+    if (confirmError) confirmError.textContent = 'You must confirm your presence to submit.';
+    valid = false;
+  } else if (confirmError) {
+    confirmError.textContent = '';
+  }
+
+  if (!valid) {
+    shakeForm();
+    return;
+  }
+
+  // Duplicate check (same email + same lecture date)
+  const email = document.getElementById('studentEmail').value.trim().toLowerCase();
+  const lectureDate = document.getElementById('lectureDate').value;
+  const lectureNo = document.getElementById('lectureNo').value;
+  const duplicate = records.find(r => r.email.toLowerCase() === email && r.date === lectureDate);
+
+  if (duplicate) {
+    showToast(`⚠️ ${document.getElementById('studentName').value.split(' ')[0]}, you've already submitted attendance for this lecture!`, 'warning');
+    return;
+  }
+
+  // Build record
+  const now = new Date();
+  const record = {
+    id: Date.now(),
+    name: document.getElementById('studentName').value.trim(),
+    email: email,
+    studentId: document.getElementById('studentId')?.value.trim() || '',
+    roll: document.getElementById('studentRoll').value.trim(),
+    batch: document.getElementById('studentBatch').value.trim(),
+    semester: document.getElementById('studentSemester')?.value || '',
+    dept: 'CSE',
+    cpcMembershipId: document.getElementById('cpcMembershipId')?.value.trim() || '',
+    lecture: parseInt(lectureNo),
+    date: lectureDate,
+    time: now.toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    // Optional feedback
+    rating: document.getElementById('lectureRating')?.value || '',
+    difficulty: document.getElementById('lectureDifficulty')?.value || '',
+    comment: document.getElementById('feedbackComment')?.value.trim() || '',
+  };
+
+  // Save locally first
+  records.unshift(record);
+  saveRecords();
+  updateStats();
+  renderTable();
+
+  // Update session label
+  const sessionEl = document.getElementById('todayLecture');
+  if (sessionEl) sessionEl.textContent = `Lecture #${record.lecture}`;
+
+  // Show local success toast immediately
+  showToast(`🎉 Welcome, ${record.name.split(' ')[0]}! Attendance recorded for Lecture #${record.lecture}.`);
+
+
+
+  // Reset form
+  form.reset();
+  form.querySelectorAll('.form-input').forEach(inp => {
+    inp.classList.remove('error', 'success');
+  });
+  form.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+
+  // Reset feedback
+  resetFeedback();
+
+  // Restore defaults
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('lectureDate').value = today;
+  document.getElementById('lectureNo').value = record.lecture;
+
+  // Scroll to table
+  const tableSection = document.getElementById('tableSection');
+  if (tableSection) {
+    tableSection.style.display = 'block';
+    setTimeout(() => tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+  }
+}
+
+function shakeForm() {
+  const card = document.querySelector('.form-card');
+  if (!card) return;
+  card.style.animation = 'none';
+  void card.offsetWidth; // reflow
+  card.style.animation = 'shake 0.4s ease';
+  setTimeout(() => card.style.animation = '', 400);
+}
+
+// Shake keyframes
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}`;
+document.head.appendChild(shakeStyle);
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer = null;
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  const msg = document.getElementById('toastMsg');
+  if (!toast || !msg) return;
+
+  msg.textContent = message;
+  toast.style.borderColor = type === 'warning' ? 'hsl(38, 92%, 50%)' : 'hsl(142, 76%, 36%)';
+  toast.classList.add('show');
+
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => closeToast(), 5000);
+}
+
+function closeToast() {
+  const toast = document.getElementById('toast');
+  if (toast) toast.classList.remove('show');
+}
+
+window.closeToast = closeToast;
+
+/* ============================================================
+   FEEDBACK SECTION
+   ============================================================ */
+let currentRating = 0;
+
+function toggleFeedback() {
+  const body = document.getElementById('feedbackBody');
+  const chevron = document.getElementById('feedbackChevron');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'flex';
+  if (chevron) chevron.classList.toggle('open', !isOpen);
+}
+
+function setRating(value) {
+  currentRating = value;
+  const input = document.getElementById('lectureRating');
+  if (input) input.value = value;
+
+  const stars = document.querySelectorAll('.star');
+  stars.forEach(s => {
+    const v = parseInt(s.dataset.value);
+    s.classList.toggle('active', v <= value);
+  });
+
+  const labels = ['', 'Poor 😞', 'Fair 😐', 'Good 🙂', 'Very Good 😊', 'Excellent 🤩'];
+  const lbl = document.getElementById('starLabel');
+  if (lbl) lbl.textContent = labels[value] || '';
+}
+
+function setDifficulty(value) {
+  const input = document.getElementById('lectureDifficulty');
+  if (input) input.value = value;
+
+  document.querySelectorAll('.diff-pill').forEach(p => {
+    p.classList.toggle('selected', p.dataset.val === value);
+  });
+}
+
+function resetFeedback() {
+  currentRating = 0;
+  const ratingInput = document.getElementById('lectureRating');
+  if (ratingInput) ratingInput.value = '';
+  document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+  const lbl = document.getElementById('starLabel');
+  if (lbl) lbl.textContent = 'Click to rate';
+
+  const diffInput = document.getElementById('lectureDifficulty');
+  if (diffInput) diffInput.value = '';
+  document.querySelectorAll('.diff-pill').forEach(p => p.classList.remove('selected'));
+
+  const comment = document.getElementById('feedbackComment');
+  if (comment) comment.value = '';
+  const counter = document.getElementById('charCount');
+  if (counter) counter.textContent = '0 / 400';
+
+  // Collapse feedback section
+  const body = document.getElementById('feedbackBody');
+  const chevron = document.getElementById('feedbackChevron');
+  if (body) body.style.display = 'none';
+  if (chevron) chevron.classList.remove('open');
+}
+
+// Star hover effect
+document.addEventListener('DOMContentLoaded', () => {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach(star => {
+    star.addEventListener('mouseenter', () => {
+      const val = parseInt(star.dataset.value);
+      stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.value) <= val));
+    });
+    star.addEventListener('mouseleave', () => {
+      stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.value) <= currentRating));
+    });
+  });
+
+  // Char counter
+  const textarea = document.getElementById('feedbackComment');
+  const counter = document.getElementById('charCount');
+  if (textarea && counter) {
+    textarea.addEventListener('input', () => {
+      counter.textContent = `${textarea.value.length} / 400`;
+      counter.style.color = textarea.value.length > 350 ? 'hsl(38,92%,55%)' : '';
+    });
+  }
+});
+
+window.toggleFeedback = toggleFeedback;
+window.setRating = setRating;
+window.setDifficulty = setDifficulty;
+
+/* ============================================================
+   RENDER TABLE
+   ============================================================ */
+function renderTable(data = records) {
+  const tbody = document.getElementById('attendanceBody');
+  const emptyEl = document.getElementById('tableEmpty');
+  const tableSection = document.getElementById('tableSection');
+  const wrapper = document.querySelector('.table-wrapper');
+
+  if (!tbody) return;
+
+  if (records.length === 0) {
+    if (tableSection) tableSection.style.display = 'none';
+    return;
+  }
+
+  if (tableSection) tableSection.style.display = 'block';
+  tbody.innerHTML = '';
+
+  if (data.length === 0) {
+    if (wrapper) wrapper.style.display = 'none';
+    if (emptyEl) emptyEl.classList.add('show');
+    return;
+  }
+
+  if (wrapper) wrapper.style.display = '';
+  if (emptyEl) emptyEl.classList.remove('show');
+
+  data.forEach((rec, idx) => {
+    const tr = document.createElement('tr');
+    const semLabel = rec.semester ? `${rec.semester}${getOrdinal(rec.semester)} Sem` : '—';
+
+    tr.innerHTML = `
+      <td>${data.length - idx}</td>
+      <td><span class="name-cell">${escapeHTML(rec.name)}</span></td>
+      <td title="${escapeHTML(rec.email)}">${escapeHTML(truncate(rec.email, 22))}</td>
+      <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.78rem">${escapeHTML(rec.studentId || '—')}</code></td>
+      <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.78rem">${escapeHTML(rec.roll)}</code></td>
+      <td><span class="badge-pill badge-batch">${escapeHTML(rec.batch)}</span></td>
+      <td>${semLabel}</td>
+      <td><span class="badge-pill badge-dept">${escapeHTML(rec.dept)}</span></td>
+      <td><span class="badge-pill" style="background:hsla(270,70%,60%,0.15);color:hsl(270,70%,75%)">${escapeHTML(rec.cpcMembershipId || '—')}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace">#${rec.lecture}</td>
+      <td>${formatDate(rec.date)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:0.78rem">${escapeHTML(rec.time)}</td>
+      <td>
+        <button class="delete-btn" onclick="deleteRecord(${rec.id})" title="Remove this record">🗑</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function getOrdinal(n) {
+  const num = parseInt(n);
+  if (num === 1) return 'st';
+  if (num === 2) return 'nd';
+  if (num === 3) return 'rd';
+  return 'th';
+}
+
+/* ============================================================
+   SEARCH / FILTER
+   ============================================================ */
+function filterTable() {
+  const query = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+  if (!query) { renderTable(records); return; }
+
+  const filtered = records.filter(r =>
+    r.name.toLowerCase().includes(query) ||
+    r.email.toLowerCase().includes(query) ||
+    (r.roll || '').toLowerCase().includes(query) ||
+    (r.batch || '').toLowerCase().includes(query) ||
+    (r.studentId || '').toLowerCase().includes(query) ||
+    (r.cpcMembershipId || '').toLowerCase().includes(query)
+  );
+  renderTable(filtered);
+}
+
+window.filterTable = filterTable;
+
+/* ============================================================
+   DELETE RECORD
+   ============================================================ */
+function deleteRecord(id) {
+  if (!confirm('Remove this attendance record?')) return;
+  records = records.filter(r => r.id !== id);
+  saveRecords();
+  updateStats();
+  renderTable();
+  const query = document.getElementById('searchInput')?.value;
+  if (query) filterTable();
+}
+
+window.deleteRecord = deleteRecord;
+
+/* ============================================================
+   CLEAR ALL
+   ============================================================ */
+function clearRecords() {
+  if (!confirm('Are you sure you want to delete ALL attendance records? This cannot be undone.')) return;
+  records = [];
+  saveRecords();
+  updateStats();
+  renderTable();
+}
+
+window.clearRecords = clearRecords;
+
+/* ============================================================
+   EXPORT CSV
+   ============================================================ */
+function exportCSV() {
+  if (records.length === 0) { alert('No records to export.'); return; }
+
+  const headers = ['#', 'Name', 'Email', 'Student ID', 'Roll', 'Batch', 'Semester', 'Department', 'CPC Membership ID', 'Lecture', 'Date', 'Time'];
+  const rows = records.map((r, i) => [
+    records.length - i,
+    r.name,
+    r.email,
+    r.studentId || '',
+    r.roll,
+    r.batch,
+    r.semester ? `${r.semester}${getOrdinal(r.semester)} Semester` : '',
+    r.dept,
+    r.cpcMembershipId || '',
+    `Lecture #${r.lecture}`,
+    r.date,
+    r.time,
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `diucpc_attendance_${today}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+window.exportCSV = exportCSV;
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function truncate(str, max) {
+  return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+function formatDate(dateStr) {
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}

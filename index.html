@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DIU CPC – Basic Programming Course | Attendance System</title>
+  <meta name="description"
+    content="Attendance system for the Basic Programming Course by DIU CPC – Dhaka International University Computer Programming Club." />
+  <meta name="author" content="DIU CPC" />
+  <meta name="keywords" content="DIU CPC, attendance, basic programming, course, Dhaka International University" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- Background Effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner">
+      <div class="header-brand">
+        <div class="logo-wrapper">
+          <div class="logo-pulse"></div>
+          <img src="image.webp" alt="DIU CPC Logo" class="logo-img" />
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">DIU CPC</span>
+          <span class="brand-tagline">Let Infinity Be Your Limit</span>
+        </div>
+      </div>
+      <div class="header-center">
+        <span class="course-badge">
+          <span class="badge-dot"></span>
+          Basic Programming Course — Lecture In Progress
+        </span>
+      </div>
+      <div class="header-meta">
+        <div class="live-clock" id="liveClock"></div>
+        <div class="date-display" id="dateDisplay"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main container">
+
+    <!-- Hero Section -->
+    <section class="hero-section fade-up">
+      <div class="hero-content">
+        <p class="section-label">
+          <span class="label-dot"></span>
+          Attendance Portal
+        </p>
+        <h1 class="hero-title">
+          Mark Your <span class="gradient-text">Attendance</span>
+        </h1>
+        <p class="hero-desc">
+          Welcome to today's lecture! Please fill in your details below to record your attendance for the <strong>Basic
+            Programming Course</strong> by DIU CPC.
+        </p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <span class="stat-icon">📅</span>
+          <div>
+            <span class="stat-value" id="todayLecture">Lecture #1</span>
+            <span class="stat-label">Today's Session</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">👥</span>
+          <div>
+            <span class="stat-value" id="totalAttendees">0</span>
+            <span class="stat-label">Attended Today</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">✅</span>
+          <div>
+            <span class="stat-value" id="totalRecords">0</span>
+            <span class="stat-label">Total Records</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Attendance Form -->
+    <section class="form-section fade-up" id="formSection">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-header-icon">📝</div>
+          <div>
+            <h2 class="form-card-title">Student Information</h2>
+            <p class="form-card-subtitle">All fields are required to complete attendance</p>
+          </div>
+        </div>
+
+        <form id="attendanceForm" class="attendance-form" novalidate>
+
+          <!-- Row 1: Name & Email -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="studentName" class="form-label">
+                <span class="label-icon">👤</span> Full Name
+              </label>
+              <input type="text" id="studentName" name="studentName" class="form-input" placeholder="e.g. Rahim Uddin"
+                autocomplete="name" required />
+              <span class="form-error" id="nameError"></span>
+            </div>
+            <div class="form-group">
+              <label for="studentEmail" class="form-label">
+                <span class="label-icon">📧</span> Email Address
+              </label>
+              <input type="email" id="studentEmail" name="studentEmail" class="form-input"
+                placeholder="e.g. your@diu.edu.bd" autocomplete="email" required />
+              <span class="form-error" id="emailError"></span>
+            </div>
+          </div>
+
+          <!-- Row 2: Student ID & Roll (separate) -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="studentId" class="form-label">
+                <span class="label-icon">🪪</span> Student ID
+              </label>
+              <input type="text" id="studentId" name="studentId" class="form-input"
+                placeholder="e.g. 241-15-12345" />
+              <span class="form-error" id="studentIdError"></span>
+            </div>
+            <div class="form-group">
+              <label for="studentRoll" class="form-label">
+                <span class="label-icon">🔢</span> Roll Number
+              </label>
+              <input type="number" id="studentRoll" name="studentRoll" class="form-input"
+                placeholder="e.g. 42" min="1" required />
+              <span class="form-error" id="rollError"></span>
+            </div>
+          </div>
+
+          <!-- Row 3: Batch & Semester -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="studentBatch" class="form-label">
+                <span class="label-icon">🎓</span> Batch
+              </label>
+              <input type="text" id="studentBatch" name="studentBatch" class="form-input"
+                placeholder="e.g. 62" required />
+              <span class="form-error" id="batchError"></span>
+            </div>
+            <div class="form-group">
+              <label for="studentSemester" class="form-label">
+                <span class="label-icon">📆</span> Semester
+              </label>
+              <select id="studentSemester" name="studentSemester" class="form-input form-select">
+                <option value="" disabled selected>Select semester</option>
+                <option value="1">1st Semester</option>
+                <option value="2">2nd Semester</option>
+                <option value="3">3rd Semester</option>
+                <option value="4">4th Semester</option>
+                <option value="5">5th Semester</option>
+                <option value="6">6th Semester</option>
+                <option value="7">7th Semester</option>
+                <option value="8">8th Semester</option>
+              </select>
+              <span class="form-error" id="semesterError"></span>
+            </div>
+          </div>
+
+          <!-- Row 4: Department (CSE fixed) & CPC Membership ID -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="studentDept" class="form-label">
+                <span class="label-icon">🏛️</span> Department
+              </label>
+              <input type="text" id="studentDept" name="studentDept" class="form-input dept-fixed"
+                value="CSE – Computer Science & Engineering" readonly />
+            </div>
+            <div class="form-group">
+              <label for="cpcMembershipId" class="form-label">
+                <span class="label-icon">🏷️</span> CPC Membership ID
+              </label>
+              <input type="text" id="cpcMembershipId" name="cpcMembershipId" class="form-input"
+                placeholder="e.g. CPC-2025-001" />
+              <span class="form-error" id="cpcIdError"></span>
+            </div>
+          </div>
+
+          <!-- Row 5: Lecture No & Lecture Date -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lectureNo" class="form-label">
+                <span class="label-icon">📖</span> Lecture Number
+              </label>
+              <input type="number" id="lectureNo" name="lectureNo" class="form-input" placeholder="e.g. 1" min="1"
+                max="100" required />
+              <span class="form-error" id="lectureError"></span>
+            </div>
+            <div class="form-group">
+              <label for="lectureDate" class="form-label">
+                <span class="label-icon">📅</span> Lecture Date
+              </label>
+              <input type="date" id="lectureDate" name="lectureDate" class="form-input" required />
+              <span class="form-error" id="dateError"></span>
+            </div>
+          </div>
+
+          <!-- ✦ Optional Feedback Section ✦ -->
+          <div class="feedback-section">
+            <div class="feedback-toggle" onclick="toggleFeedback()" id="feedbackToggle">
+              <div class="feedback-toggle-left">
+                <span class="feedback-toggle-icon">💬</span>
+                <div>
+                  <p class="feedback-toggle-title">Share Your Feedback <span class="optional-badge">Optional</span></p>
+                  <p class="feedback-toggle-sub">Help us improve — rate today's lecture</p>
+                </div>
+              </div>
+              <span class="feedback-chevron" id="feedbackChevron">▾</span>
+            </div>
+
+            <div class="feedback-body" id="feedbackBody" style="display:none;">
+
+              <!-- Star Rating -->
+              <div class="form-group">
+                <label class="form-label">
+                  <span class="label-icon">⭐</span> How would you rate today's lecture?
+                </label>
+                <div class="star-rating" id="starRating">
+                  <button type="button" class="star" data-value="1" onclick="setRating(1)" title="Poor">★</button>
+                  <button type="button" class="star" data-value="2" onclick="setRating(2)" title="Fair">★</button>
+                  <button type="button" class="star" data-value="3" onclick="setRating(3)" title="Good">★</button>
+                  <button type="button" class="star" data-value="4" onclick="setRating(4)" title="Very Good">★</button>
+                  <button type="button" class="star" data-value="5" onclick="setRating(5)" title="Excellent">★</button>
+                </div>
+                <p class="star-label" id="starLabel">Click to rate</p>
+                <input type="hidden" id="lectureRating" name="lectureRating" value="" />
+              </div>
+
+              <!-- Difficulty Level -->
+              <div class="form-group">
+                <label class="form-label">
+                  <span class="label-icon">🎯</span> How was the difficulty level?
+                </label>
+                <div class="difficulty-pills" id="difficultyPills">
+                  <button type="button" class="diff-pill" onclick="setDifficulty('Too Easy')" data-val="Too Easy">😴 Too Easy</button>
+                  <button type="button" class="diff-pill" onclick="setDifficulty('Just Right')" data-val="Just Right">✅ Just Right</button>
+                  <button type="button" class="diff-pill" onclick="setDifficulty('Challenging')" data-val="Challenging">🔥 Challenging</button>
+                  <button type="button" class="diff-pill" onclick="setDifficulty('Too Hard')" data-val="Too Hard">😵 Too Hard</button>
+                </div>
+                <input type="hidden" id="lectureDifficulty" name="lectureDifficulty" value="" />
+              </div>
+
+              <!-- Comment Box -->
+              <div class="form-group">
+                <label for="feedbackComment" class="form-label">
+                  <span class="label-icon">📝</span> Any comments or suggestions?
+                </label>
+                <textarea
+                  id="feedbackComment"
+                  name="feedbackComment"
+                  class="form-input feedback-textarea"
+                  placeholder="e.g. The explanation of loops was very clear. Please add more examples next time…"
+                  rows="3"
+                  maxlength="400"
+                ></textarea>
+                <p class="char-count" id="charCount">0 / 400</p>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Confirmation -->
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="confirmPresent" class="checkbox-input" required />
+              <span class="checkbox-custom"></span>
+              <span>I confirm that I am physically present in today's lecture and this information is correct.</span>
+            </label>
+            <span class="form-error" id="confirmError"></span>
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <span class="btn-shimmer"></span>
+            <span class="btn-icon">✅</span>
+            <span class="btn-text">Submit Attendance</span>
+            <span class="btn-arrow">→</span>
+          </button>
+
+        </form>
+      </div>
+    </section>
+
+    <!-- Success Toast -->
+    <div class="toast" id="toast">
+      <span class="toast-icon">🎉</span>
+      <div>
+        <strong>Attendance Recorded!</strong>
+        <p id="toastMsg">Your attendance has been saved successfully.</p>
+      </div>
+      <button class="toast-close" onclick="closeToast()">✕</button>
+    </div>
+    <!-- Attendance Records Table -->
+    <section class="table-section fade-up" id="tableSection" style="display:none;">
+      <div class="table-card">
+        <div class="table-header">
+          <div>
+            <h2 class="table-title">📋 Attendance Records</h2>
+            <p class="table-subtitle">All submissions for today's session</p>
+          </div>
+          <div class="table-actions">
+            <button class="btn-action" onclick="exportCSV()" id="exportBtn">
+              <span>⬇</span> Export CSV
+            </button>
+            <button class="btn-action btn-danger" onclick="clearRecords()">
+              <span>🗑</span> Clear All
+            </button>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by name, roll, email…"
+            oninput="filterTable()" />
+        </div>
+
+        <div class="table-wrapper">
+          <table class="attendance-table" id="attendanceTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Student ID</th>
+                <th>Roll</th>
+                <th>Batch</th>
+                <th>Semester</th>
+                <th>Dept.</th>
+                <th>CPC ID</th>
+                <th>Lecture</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceBody">
+            </tbody>
+          </table>
+        </div>
+        <div class="table-empty" id="tableEmpty">
+          <span class="empty-icon">📭</span>
+          <p>No attendance records yet. Be the first to submit!</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="image.webp" alt="DIU CPC Logo" class="footer-logo-img" />
+        <div>
+          <p class="footer-name">DIU CPC</p>
+          <p class="footer-sub">Dhaka International University<br />Computer Programming Club</p>
+        </div>
+      </div>
+      <div class="footer-center">
+        <p class="footer-course">📚 Basic Programming Course — Attendance System</p>
+        <p class="footer-copy">© 2026 DIU CPC • <a href="https://diucpc.club" target="_blank"
+            rel="noopener">diucpc.club</a></p>
+      </div>
+      <div class="footer-links">
+        <a href="https://diucpc.club" target="_blank" rel="noopener" class="footer-link">Website</a>
+        <a href="https://diucpc.club/about" target="_blank" rel="noopener" class="footer-link">About</a>
+        <a href="https://diucpc.club/contact" target="_blank" rel="noopener" class="footer-link">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
