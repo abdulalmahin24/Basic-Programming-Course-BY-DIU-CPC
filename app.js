@@ -5,7 +5,7 @@
 'use strict';
 
 /* ---- Configuration ---- */
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyDgdbpVLY14Lx0XnoTw9QASB8DzJrjDpceKOPymzbShvfKDFUsccXNyoZEGtEk76p/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0Aqz-yFRGvVqvFsyBTH-p_Kwyng5fGrW0HwgV5nzv9lHi7DkaiHi0KXX9KXXSSz8S/exec';
 
 /* ---- State ---- */
 let records = loadRecords();
