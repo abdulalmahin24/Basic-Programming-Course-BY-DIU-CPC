@@ -4,6 +4,9 @@
 
 'use strict';
 
+/* ---- Configuration ---- */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyDgdbpVLY14Lx0XnoTw9QASB8DzJrjDpceKOPymzbShvfKDFUsccXNyoZEGtEk76p/exec';
+
 /* ---- State ---- */
 let records = loadRecords();
 
@@ -227,6 +230,7 @@ function handleSubmit(e) {
     lecture: parseInt(lectureNo),
     date: lectureDate,
     time: now.toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    synced: false,
     // Optional feedback
     rating: document.getElementById('lectureRating')?.value || '',
     difficulty: document.getElementById('lectureDifficulty')?.value || '',
@@ -246,7 +250,15 @@ function handleSubmit(e) {
   // Show local success toast immediately
   showToast(`🎉 Welcome, ${record.name.split(' ')[0]}! Attendance recorded for Lecture #${record.lecture}.`);
 
-
+  // Background Sync to Google Sheets
+  sendToGoogleSheets(record).then(() => {
+    const idx = records.findIndex(r => r.id === record.id);
+    if (idx !== -1) {
+      records[idx].synced = true;
+      saveRecords();
+      renderTable();
+    }
+  });
 
   // Reset form
   form.reset();
@@ -439,10 +451,13 @@ function renderTable(data = records) {
   data.forEach((rec, idx) => {
     const tr = document.createElement('tr');
     const semLabel = rec.semester ? `${rec.semester}${getOrdinal(rec.semester)} Sem` : '—';
+    const syncBadge = rec.synced
+      ? `<span class="sync-badge">✓ Synced</span>`
+      : `<span class="sync-badge" style="background:hsla(38,92%,50%,0.1);color:hsl(38,92%,60%)">⏳ Pending</span>`;
 
     tr.innerHTML = `
       <td>${data.length - idx}</td>
-      <td><span class="name-cell">${escapeHTML(rec.name)}</span></td>
+      <td><span class="name-cell">${escapeHTML(rec.name)}</span>${syncBadge}</td>
       <td title="${escapeHTML(rec.email)}">${escapeHTML(truncate(rec.email, 22))}</td>
       <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.78rem">${escapeHTML(rec.studentId || '—')}</code></td>
       <td><code style="font-family:'JetBrains Mono',monospace;font-size:0.78rem">${escapeHTML(rec.roll)}</code></td>
@@ -523,7 +538,7 @@ window.clearRecords = clearRecords;
 function exportCSV() {
   if (records.length === 0) { alert('No records to export.'); return; }
 
-  const headers = ['#', 'Name', 'Email', 'Student ID', 'Roll', 'Batch', 'Semester', 'Department', 'CPC Membership ID', 'Lecture', 'Date', 'Time'];
+  const headers = ['#', 'Name', 'Email', 'Student ID', 'Roll', 'Batch', 'Semester', 'Department', 'CPC Membership ID', 'Lecture', 'Date', 'Time', 'Synced to Sheets'];
   const rows = records.map((r, i) => [
     records.length - i,
     r.name,
@@ -537,6 +552,7 @@ function exportCSV() {
     `Lecture #${r.lecture}`,
     r.date,
     r.time,
+    r.synced ? 'Yes' : 'No',
   ]);
 
   const csvContent = [headers, ...rows]
@@ -579,5 +595,47 @@ function formatDate(dateStr) {
     return d.toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' });
   } catch {
     return dateStr;
+  }
+}
+
+/* ============================================================
+   GOOGLE SHEETS — SEND RECORD
+   ============================================================ */
+async function sendToGoogleSheets(record) {
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(record),
+    });
+    console.log('✅ Synced to Google Sheets:', record.name);
+  } catch (err) {
+    console.warn('POST failed, trying GET fallback…', err);
+    try {
+      const params = new URLSearchParams({
+        name: record.name,
+        email: record.email,
+        studentId: record.studentId || '',
+        roll: record.roll,
+        batch: record.batch,
+        semester: record.semester || '',
+        dept: record.dept,
+        cpcMembershipId: record.cpcMembershipId || '',
+        lecture: record.lecture,
+        date: record.date,
+        time: record.time,
+        rating: record.rating || '',
+        difficulty: record.difficulty || '',
+        comment: record.comment || '',
+      });
+      await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, {
+        method: 'GET',
+        mode: 'no-cors',
+      });
+      console.log('✅ Synced via GET fallback:', record.name);
+    } catch (fallbackErr) {
+      console.error('❌ Google Sheets sync failed completely:', fallbackErr);
+    }
   }
 }
