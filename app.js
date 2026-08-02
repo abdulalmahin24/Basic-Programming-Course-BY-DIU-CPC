@@ -38,6 +38,30 @@ updateClock();
    ON PAGE LOAD
    ============================================================ */
 window.addEventListener('DOMContentLoaded', () => {
+  // Theme toggle
+  const savedTheme = localStorage.getItem('diucpc_theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = '🌙';
+  }
+
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      if (isLight) {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('diucpc_theme', 'dark');
+        themeToggle.textContent = '☀️';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('diucpc_theme', 'light');
+        themeToggle.textContent = '🌙';
+      }
+    });
+  }
+
   // Set today's date
   const today = new Date().toISOString().split('T')[0];
   const lectureDateInput = document.getElementById('lectureDate');
@@ -188,6 +212,25 @@ function handleSubmit(e) {
     const input = document.getElementById(id);
     if (input && !validateField(input)) valid = false;
   });
+
+  // Validate feedback
+  const rating = document.getElementById('lectureRating').value;
+  const ratingError = document.getElementById('ratingError');
+  if (!rating) {
+    if (ratingError) ratingError.textContent = 'Please rate the lecture.';
+    valid = false;
+  } else if (ratingError) {
+    ratingError.textContent = '';
+  }
+
+  const diff = document.getElementById('lectureDifficulty').value;
+  const diffError = document.getElementById('difficultyError');
+  if (!diff) {
+    if (diffError) diffError.textContent = 'Please select a difficulty level.';
+    valid = false;
+  } else if (diffError) {
+    diffError.textContent = '';
+  }
 
   // Validate checkbox
   const confirmEl = document.getElementById('confirmPresent');
@@ -347,6 +390,8 @@ function setRating(value) {
   currentRating = value;
   const input = document.getElementById('lectureRating');
   if (input) input.value = value;
+  const err = document.getElementById('ratingError');
+  if (err) err.textContent = '';
 
   const stars = document.querySelectorAll('.star');
   stars.forEach(s => {
@@ -362,6 +407,8 @@ function setRating(value) {
 function setDifficulty(value) {
   const input = document.getElementById('lectureDifficulty');
   if (input) input.value = value;
+  const err = document.getElementById('difficultyError');
+  if (err) err.textContent = '';
 
   document.querySelectorAll('.diff-pill').forEach(p => {
     p.classList.toggle('selected', p.dataset.val === value);
@@ -385,11 +432,11 @@ function resetFeedback() {
   const counter = document.getElementById('charCount');
   if (counter) counter.textContent = '0 / 400';
 
-  // Collapse feedback section
-  const body = document.getElementById('feedbackBody');
-  const chevron = document.getElementById('feedbackChevron');
-  if (body) body.style.display = 'none';
-  if (chevron) chevron.classList.remove('open');
+  // Clear feedback errors
+  const rErr = document.getElementById('ratingError');
+  if (rErr) rErr.textContent = '';
+  const dErr = document.getElementById('difficultyError');
+  if (dErr) dErr.textContent = '';
 }
 
 // Star hover effect

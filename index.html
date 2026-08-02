@@ -43,7 +43,10 @@
         </span>
       </div>
       <div class="header-meta">
-        <div class="live-clock" id="liveClock"></div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div class="live-clock" id="liveClock"></div>
+          <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">☀️</button>
+        </div>
         <div class="date-display" id="dateDisplay"></div>
       </div>
     </div>
@@ -215,18 +218,17 @@
 
           <!-- ✦ Optional Feedback Section ✦ -->
           <div class="feedback-section">
-            <div class="feedback-toggle" onclick="toggleFeedback()" id="feedbackToggle">
+            <div class="feedback-toggle" id="feedbackToggle" style="cursor: default;">
               <div class="feedback-toggle-left">
                 <span class="feedback-toggle-icon">💬</span>
                 <div>
-                  <p class="feedback-toggle-title">Share Your Feedback <span class="optional-badge">Optional</span></p>
+                  <p class="feedback-toggle-title">Share Your Feedback <span style="color: hsl(0, 72%, 60%); font-weight: bold; margin-left: 0.2rem;">*</span></p>
                   <p class="feedback-toggle-sub">Help us improve — rate today's lecture</p>
                 </div>
               </div>
-              <span class="feedback-chevron" id="feedbackChevron">▾</span>
             </div>
 
-            <div class="feedback-body" id="feedbackBody" style="display:none;">
+            <div class="feedback-body" id="feedbackBody">
 
               <!-- Star Rating -->
               <div class="form-group">
@@ -242,6 +244,7 @@
                 </div>
                 <p class="star-label" id="starLabel">Click to rate</p>
                 <input type="hidden" id="lectureRating" name="lectureRating" value="" />
+                <span class="form-error" id="ratingError"></span>
               </div>
 
               <!-- Difficulty Level -->
@@ -256,6 +259,7 @@
                   <button type="button" class="diff-pill" onclick="setDifficulty('Too Hard')" data-val="Too Hard">😵 Too Hard</button>
                 </div>
                 <input type="hidden" id="lectureDifficulty" name="lectureDifficulty" value="" />
+                <span class="form-error" id="difficultyError"></span>
               </div>
 
               <!-- Comment Box -->
