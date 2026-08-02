@@ -16,6 +16,7 @@
   --bg-surface: hsl(220, 20%, 10%);
   --bg-card: hsl(220, 18%, 12%);
   --bg-input: hsl(220, 18%, 14%);
+  --bg-checkbox: hsla(220, 20%, 14%, 0.5);
 
   --border-color: hsl(220, 20%, 18%);
   --border-focus: hsl(217, 91%, 60%);
@@ -40,6 +41,31 @@
 
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: 0.15s ease;
+}
+
+:root[data-theme="light"] {
+  --bg-base: hsl(220, 26%, 96%);
+  --bg-surface: hsl(220, 20%, 98%);
+  --bg-card: hsl(0, 0%, 100%);
+  --bg-input: hsl(220, 18%, 94%);
+  --bg-checkbox: hsla(220, 20%, 92%, 0.8);
+  --border-color: hsl(220, 20%, 88%);
+  --text-primary: hsl(220, 15%, 15%);
+  --text-secondary: hsl(220, 10%, 35%);
+  --text-muted: hsl(220, 8%, 55%);
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 50%;
+  transition: transform var(--transition);
+}
+.theme-toggle:hover {
+  transform: scale(1.1);
 }
 
 /* ---------- Reset & Base ---------- */
@@ -524,7 +550,7 @@ body {
 
 /* Checkbox */
 .checkbox-group {
-  background: hsla(220, 20%, 14%, 0.5);
+  background: var(--bg-checkbox);
   border: 1px dashed var(--border-color);
   border-radius: var(--radius-md);
   padding: 1rem 1.25rem;
