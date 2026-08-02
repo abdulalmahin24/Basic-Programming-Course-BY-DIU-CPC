@@ -35,6 +35,42 @@ setInterval(updateClock, 1000);
 updateClock();
 
 /* ============================================================
+   LECTURE AUTOMATION
+   ============================================================ */
+function updateLectureNumberAuto(dateString) {
+  const lectureNoInput = document.getElementById('lectureNo');
+  if (!lectureNoInput || !dateString) return;
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const utcBase = Date.UTC(2026, 7, 3); // August 3, 2026
+  
+  const [year, month, day] = dateString.split('-').map(Number);
+  if (!year || !month || !day) return;
+  const utcTarget = Date.UTC(year, month - 1, day);
+  
+  const daysDiff = Math.floor((utcTarget - utcBase) / msPerDay);
+  
+  if (daysDiff >= 0) {
+    const extraLectures = Math.floor((daysDiff + 6) / 7);
+    lectureNoInput.value = 5 + extraLectures;
+  } else {
+    // Fallback to records
+    const dateRecords = records.filter(r => r.date === dateString);
+    if (dateRecords.length > 0) {
+      lectureNoInput.value = dateRecords[0].lecture;
+    } else {
+      const uniqueDates = [...new Set(records.map(r => r.date))];
+      lectureNoInput.value = uniqueDates.length + 1;
+    }
+  }
+  
+  const sessionEl = document.getElementById('todayLecture');
+  if (sessionEl) {
+    sessionEl.textContent = `Lecture #${lectureNoInput.value || '?'}`;
+  }
+}
+
+/* ============================================================
    ON PAGE LOAD
    ============================================================ */
 window.addEventListener('DOMContentLoaded', () => {
@@ -68,25 +104,16 @@ window.addEventListener('DOMContentLoaded', () => {
   if (lectureDateInput) {
     lectureDateInput.value = today;
     lectureDateInput.max = today;
+    
+    // Listen for date changes to auto-update lecture number
+    lectureDateInput.addEventListener('change', (e) => {
+      updateLectureNumberAuto(e.target.value);
+    });
   }
 
-  // Auto-fill lecture number
-  const todayRecords = records.filter(r => r.date === today);
-  const lectureNoInput = document.getElementById('lectureNo');
-  if (lectureNoInput && todayRecords.length === 0) {
-    const uniqueDates = [...new Set(records.map(r => r.date))];
-    lectureNoInput.value = uniqueDates.includes(today) ? (records[0]?.lecture || 1) : uniqueDates.length + 1;
-  } else if (lectureNoInput && todayRecords.length > 0) {
-    lectureNoInput.value = todayRecords[0].lecture;
-  }
-
-  // Update session label
-  const sessionEl = document.getElementById('todayLecture');
-  if (sessionEl) {
-    const lec = document.getElementById('lectureNo')?.value || '?';
-    sessionEl.textContent = `Lecture #${lec}`;
-  }
-
+  // Auto-fill lecture number based on date
+  updateLectureNumberAuto(today);
+  
   updateStats();
   renderTable();
 });
@@ -314,9 +341,9 @@ function handleSubmit(e) {
   resetFeedback();
 
   // Restore defaults
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('lectureDate').value = today;
-  document.getElementById('lectureNo').value = record.lecture;
+  const todayDate = new Date().toISOString().split('T')[0];
+  document.getElementById('lectureDate').value = todayDate;
+  updateLectureNumberAuto(todayDate);
 
   // Scroll to table
   const tableSection = document.getElementById('tableSection');
