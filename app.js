@@ -42,7 +42,8 @@ function updateLectureNumberAuto(dateString) {
   if (!lectureNoInput || !dateString) return;
 
   const msPerDay = 1000 * 60 * 60 * 24;
-  const utcBase = Date.UTC(2026, 7, 3); // August 3, 2026
+  // Base date: July 28, 2026 (Tuesday) -> Start of Lecture 5 week
+  const utcBase = Date.UTC(2026, 6, 28);
   
   const [year, month, day] = dateString.split('-').map(Number);
   if (!year || !month || !day) return;
@@ -50,19 +51,9 @@ function updateLectureNumberAuto(dateString) {
   
   const daysDiff = Math.floor((utcTarget - utcBase) / msPerDay);
   
-  if (daysDiff >= 0) {
-    const extraLectures = Math.floor((daysDiff + 6) / 7);
-    lectureNoInput.value = 5 + extraLectures;
-  } else {
-    // Fallback to records
-    const dateRecords = records.filter(r => r.date === dateString);
-    if (dateRecords.length > 0) {
-      lectureNoInput.value = dateRecords[0].lecture;
-    } else {
-      const uniqueDates = [...new Set(records.map(r => r.date))];
-      lectureNoInput.value = uniqueDates.length + 1;
-    }
-  }
+  // Calculate lecture number (minimum 1)
+  const lectureNum = Math.max(1, 5 + Math.floor(daysDiff / 7));
+  lectureNoInput.value = lectureNum;
   
   const sessionEl = document.getElementById('todayLecture');
   if (sessionEl) {
